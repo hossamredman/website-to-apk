@@ -9,38 +9,56 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # 1️⃣ سحب المستودع
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2️⃣ إعداد Java JDK 17
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
+      # 3️⃣ إعداد Android SDK الأساسي
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      # 4️⃣ تثبيت Android Command Line Tools
+      - name: Install Android Command Line Tools
+        run: |
+          sudo mkdir -p $ANDROID_HOME/cmdline-tools
+          sudo curl -o commandlinetools.zip https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+          sudo unzip -q commandlinetools.zip -d $ANDROID_HOME/cmdline-tools
+          sudo mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+
+      # 5️⃣ إعداد Gradle
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.4'
 
+      # 6️⃣ جعل سكريبت make.sh قابل للتنفيذ
       - name: Make scripts executable
         run: chmod +x make.sh
 
+      # 7️⃣ فك keystore
       - name: Decode keystore
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app/my-release-key.jks
         shell: bash
 
+      # 8️⃣ بناء APK
       - name: Build APK
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          ANDROID_SDK_ROOT: $ANDROID_HOME
         run: ./make.sh build
         shell: bash
 
+      # 9️⃣ رفع الـ APK النهائي
       - name: Upload release APK artifact
         uses: actions/upload-artifact@v4
         with:
