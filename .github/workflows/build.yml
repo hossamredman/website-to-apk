@@ -42,7 +42,7 @@ jobs:
         shell: bash
 
       - name: Upload release APK artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: hr-y-app-apk
           path: app/build/outputs/apk/release/*.apk
